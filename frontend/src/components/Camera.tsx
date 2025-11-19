@@ -1,4 +1,4 @@
-import react,{useState,useEffect,useRef} from "react";
+import React,{useState,useEffect,useRef} from "react";
 import axios from "axios";
 
 export const Camera:React.FC=()=>{
@@ -9,22 +9,24 @@ export const Camera:React.FC=()=>{
 
 useEffect(()=>{
 
-asyncfunction startCamera(){
+async function startCamera(){
     try{
         const stream=await navigator.mediaDevices.getUserMedia({
             video:{facingMode:"environment"},
             audio:false
         });
-        if(!videoRef.current){
-            VideoRef.current.srcObject=stream
-            await videoRef.current.play();
-        }
-      }catch(error){
-        console.error("Error accessing camera:",error);
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          await videoRef.current.play();
+      }
+
+    } catch(error) {
+        console.error("Error accessing camera:",error)
         setStatus("Error");
       }
-        startCamera();
-    },[]);
+    }
+    startCamera();
+    }, []);
 
     const captureAndUpload=async()=>{
         if (!videoRef.current || !canvasRef.current) {
@@ -35,11 +37,11 @@ asyncfunction startCamera(){
             canvas.width=video.videoWidth;
             canvas.height=video.videoHeight;
             const ctx=canvas.getContext("2d");
+            if (!ctx) {
+              return;
+          }
             ctx.drawImage(video,0,0,canvas.width,canvas.height);
-            if(!ctx){
-                return;
-            }
-                ctx.drawImage(video,0,0,canvas.width,canvas.height);
+
 
       canvas.toBlob(async(blob)=>{
         if(!blob)return;
@@ -50,26 +52,25 @@ asyncfunction startCamera(){
           const response=await axios.post("http://localhost:8000/process",form,{
             headers:{ "Content-Type":"multipart/form-data"},
           });
-          if (res.data && res.data.result){
-            setPreview(res.data.result.preview);
-            setStatus("done");{
-              else {
-                setStatus("error");
-              }
-            }catch (error){
+          if (response.data && response.data.result){
+            setPreview(response.data.result.preview);
+            setStatus("done");
+          }else {
+            setStatus("error");
+          }
+        }catch (error){
               console.error("Error uploading image:",error);
               setStatus("error-uploading");
             }
-              "image/jpeg, 0.8"
           });
         }
 
-        useEffect(()=>{
-          const interval=setInterval(async () =>{
-            await captureAndUpload();
-          },5000);
-          return()=>clearInterval(interval);
-        },[]);
+        useEffect(() => {
+          const interval = setInterval(async () => {
+              await captureAndUpload();
+          }, 5000);
+          return () => clearInterval(interval);
+      }, []);
 
 
         return (
@@ -90,5 +91,5 @@ asyncfunction startCamera(){
         )
       };
 
-      
 
+export default Camera;
