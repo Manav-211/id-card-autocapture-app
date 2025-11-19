@@ -1,6 +1,8 @@
 from fastapi import FastAPI, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
-from process import process_image
+from app.process import process_image
+
+
 
 app = FastAPI()
 
