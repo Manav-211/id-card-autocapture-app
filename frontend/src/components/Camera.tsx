@@ -81,7 +81,20 @@ async function startCamera(){
 
         return (
           <div>
-            <video ref={videoRef} style={{width:"100%"}}muted playsInline/>
+        <div style={{ position: "relative", width: "100%" }}>
+          <video ref={videoRef} style={{ width: "100%" }} muted playsInline />
+          <div
+            style={{
+            position: "absolute",
+            top: "30%",
+            left: "10%",
+            width: "80%",
+            height: "40%",
+            border: "2px dashed lime",
+            pointerEvents: "none",
+    }}
+  />
+</div>
             <canvas ref={canvasRef} style={{display:"none"}}/>
             <div>
             <button onClick={captureAndUpload}>Capture Now</button>
