@@ -52,9 +52,15 @@ async function startCamera(){
           const response=await axios.post("http://localhost:8000/process",form,{
             headers:{ "Content-Type":"multipart/form-data"},
           });
-          if (response.data && response.data.result){
-            setPreview(response.data.result.preview);
-            setStatus("done");
+          if (response.data?.result) {
+            const { sharpness, edge_ratio } = response.data.result;
+            if (sharpness > 50 && edge_ratio > 0.02) {
+              // good enough, set preview
+              setPreview(response.data.result.preview);
+              setStatus("good capture");
+            } else {
+              setStatus("not good: sharp=" + sharpness.toFixed(1) + " edge=" + edge_ratio.toFixed(3));
+            }
           }else {
             setStatus("error");
           }
