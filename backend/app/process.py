@@ -75,8 +75,10 @@ def process_image(image_bytes: bytes):
     lap=cv2.Laplacian(gray, cv2.CV_64F)
     sharpness= float(lap.var())
     preview_img = cropped_img if cropped_img is not None else img
-    small = cv2.resize(preview_img, (preview_img.shape[1]//4, preview_img.shape[0]//4))
-    buf = cv2.imencode('.jpg', small, [int(cv2.IMWRITE_JPEG_QUALITY), 80])
+    # Resize to maintain quality while reducing file size (1/2 instead of 1/4)
+    small = cv2.resize(preview_img, (preview_img.shape[1]//2, preview_img.shape[0]//2), interpolation=cv2.INTER_LANCZOS4)
+    # Use higher JPEG quality (95) for better preview clarity
+    buf = cv2.imencode('.jpg', small, [int(cv2.IMWRITE_JPEG_QUALITY), 95])
     thumbnail = buf[1].tobytes()
     b64 = base64.b64encode(thumbnail).decode("utf-8")
 
