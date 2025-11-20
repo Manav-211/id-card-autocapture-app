@@ -1,4 +1,4 @@
-# 🆔 ID Card Scanner - Smart Camera Capture
+#  ID Card Scanner - Smart Camera Capture
 
 An **intelligent web application** that automatically captures perfect ID card photos using your device's camera with **real-time quality detection**.
 
