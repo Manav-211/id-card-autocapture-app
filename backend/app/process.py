@@ -83,7 +83,7 @@ def process_image(image_bytes: bytes):
     return {
       "edge_ratio": edge_ratio,
       "sharpness": sharpness,
-      "preview": f"data:image/jpeg;base64,{b64}"
+      "preview": f"data:image/jpeg;base64,{b64}",
       "card_detected": card_detected,
         "analysis_on_cropped": card_detected
 
