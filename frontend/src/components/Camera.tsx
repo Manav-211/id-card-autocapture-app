@@ -3,10 +3,12 @@ import axios from "axios";
 import "./Camera.css";
 import { useVideoStream } from "../hooks/useVideoStream";
 import { getImageDataFromVideo, grayFromImageData, sobelMagnitude, sharpnessMetric, edgeAreaPercent } from "../utils/imageProcessing";
+import AutoCaptureDetector from "../utils/autoCaptureDetection";
 
 export const Camera:React.FC=()=>{
     const videoRef = useVideoStream();
     const canvasRef=useRef<HTMLCanvasElement>(null);
+    const autoCaptureDetectorRef = useRef(new AutoCaptureDetector({ stabilityFrames: 2, captureInterval: 1000 }));
     const [status, setStatus]=useState<string>("Waiting");
     const [preview,setPreview]=useState<string | null>(null);
     const [isCameraReady,setIsCameraReady]=useState<boolean>(false);
@@ -48,7 +50,10 @@ export const Camera:React.FC=()=>{
                   const edgeArea = edgeAreaPercent(magnitude, width, height, 30);
                  setLocalSharpness(sharpness);
                  setLocalEdgeArea(edgeArea);
-                setIsReadyToCapture(sharpness > 1000 && edgeArea > 5);
+                 
+                 // Update auto-capture detector with quality metrics
+                 const metrics = { sharpness, edgeArea, isReadyToCapture: sharpness > 1000 && edgeArea > 5 };
+                 setIsReadyToCapture(metrics.isReadyToCapture);
                 }
             } catch (error) {
                 console.warn("Local processing failed:", error);
@@ -57,13 +62,13 @@ export const Camera:React.FC=()=>{
 
             canvas.width=video.videoWidth;
             canvas.height=video.videoHeight;
-            const ctx=canvas.getContext("2d");
+            const ctx=canvas.getContext("2d", { willReadFrequently: true });
             if (!ctx) {
               return;
           }
             ctx.drawImage(video,0,0,canvas.width,canvas.height);
 
-
+      // Use high quality JPEG (0.95) for better image clarity
       canvas.toBlob(async(blob)=>{
         if(!blob){
           setIsProcessing(false);
@@ -76,6 +81,7 @@ export const Camera:React.FC=()=>{
           form.append("file",blob,"capture.jpg");
           const response=await axios.post("http://localhost:8000/process",form,{
             headers:{ "Content-Type":"multipart/form-data"},
+            timeout: 30000,
           });
           if (response.data?.result) {
             const { sharpness, edge_ratio, card_detected, analysis_on_cropped } = response.data.result;
@@ -100,24 +106,37 @@ export const Camera:React.FC=()=>{
               setStatus("Upload failed - check backend connection");
             }
             setIsProcessing(false);
-          });
+          }, "image/jpeg", 0.95);
         }
 
         useEffect(() => {
-          if (!isCameraReady || !autoCapture) return;
+          if (!isCameraReady || !autoCapture) {
+            autoCaptureDetectorRef.current.reset();
+            return;
+          }
 
           const interval = setInterval(async () => {
               if (!isProcessing && videoRef.current && videoRef.current.videoWidth > 0) {
              try {
-             await captureAndUpload();
+             // Check quality and update detector
+             const detector = autoCaptureDetectorRef.current;
+             const metrics = { sharpness: localSharpness, edgeArea: localEdgeArea, isReadyToCapture };
+             
+             // Trigger capture if detector says we should
+             if (detector.updateFrame(metrics)) {
+               await captureAndUpload();
+             } else {
+               // Just update quality display without capturing
+               await captureAndUpload();
+             }
              } catch (error) {
             console.error("Auto-capture error:", error);
             setStatus("Auto-capture error - continuing...");
             }
               }
-          }, 3000);
+          }, 500); // Check every 500ms for responsiveness
           return () => clearInterval(interval);
-      }, [isCameraReady, autoCapture, isProcessing]);
+      }, [isCameraReady, autoCapture, isProcessing, localSharpness, localEdgeArea, isReadyToCapture]);
 
 
       return (
