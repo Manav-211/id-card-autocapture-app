@@ -1,50 +1,57 @@
+/* MAIN WRAPPER */
 .camera-container {
+  max-width: 900px;
+  max-height: 700px;
+  margin: 0 auto;
+  padding: 20px;
   display: flex;
   flex-direction: column;
-  align-items: center;
   gap: 20px;
-  padding: 20px;
 }
 
+/* CAMERA VIEW BOX */
 .camera-view {
   position: relative;
   width: 100%;
-  max-width: 640px;
+
+  aspect-ratio: 3 / 4;
+  background: #000;
   border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
 }
 
+/* VIDEO */
 .camera-video {
   width: 100%;
-  height: auto;
-  display: block;
+  height: 100%;
+  object-fit: cover;
 }
 
+/* OVERLAY */
 .camera-overlay {
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  inset: 0;
   pointer-events: none;
 }
 
+/* ID CARD TARGET FRAME */
 .id-card-frame {
   position: absolute;
   top: 50%;
   left: 50%;
-  transform: translate(-50%, -50%);
   width: 80%;
-  height: 60%;
+  height: 55%;
+  transform: translate(-50%, -50%);
   border: 2px dashed #00ff00;
-  border-radius: 8px;
+  border-radius: 10px;
 }
 
+/* CORNER INDICATORS */
 .corner {
   position: absolute;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border: 3px solid #00ff00;
 }
 
@@ -76,65 +83,49 @@
   border-top: none;
 }
 
+/* CONTROLS */
 .camera-controls {
   display: flex;
+  align-items: center;
   gap: 15px;
-  flex-wrap: wrap;
   justify-content: center;
 }
 
-.capture-button, .toggle-button {
+.capture-button {
   padding: 12px 24px;
+  background: #006cff;
+  color: white;
   border: none;
-  border-radius: 8px;
+  border-radius: 10px;
   font-size: 16px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s ease;
-}
-
-.capture-button {
-  background: #007bff;
-  color: white;
+  transition: 0.2s;
 }
 
 .capture-button:hover:not(:disabled) {
-  background: #0056b3;
+  background: #0056cc;
   transform: translateY(-1px);
 }
 
 .capture-button:disabled {
-  background: #6c757d;
+  background: #888;
   cursor: not-allowed;
 }
 
-.toggle-button {
-  background: #28a745;
-  color: white;
+.status-text {
+  font-size: 16px;
+  font-weight: 500;
 }
 
-.toggle-button:hover {
-  background: #1e7e34;
-  transform: translateY(-1px);
-}
-
-.error-message {
-  padding: 40px;
+/* PREVIEW SECTION */
+.preview-container {
   text-align: center;
-  background: #f8f9fa;
-  border-radius: 8px;
 }
 
-.error-message p {
-  color: #dc3545;
-  margin-bottom: 15px;
-}
-
-.error-message button {
-  padding: 10px 20px;
-  background: #007bff;
-  color: white;
-  border: none;
-  border-radius: 6px;
-  cursor: pointer;
+.preview-image {
+  width: 100%;
+  max-width: 400px;
+  border-radius: 10px;
+  box-shadow: 0 3px 12px rgba(0, 0, 0, 0.2);
 }

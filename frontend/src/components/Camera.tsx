@@ -1,11 +1,14 @@
 import React,{useState,useEffect,useRef} from "react";
 import axios from "axios";
+import "./Camera.css";
 
 export const Camera:React.FC=()=>{
     const videoRef=useRef<HTMLVideoElement>(null);
     const canvasRef=useRef<HTMLCanvasElement>(null);
     const [status, setStatus]=useState<string>("Waiting");
     const [preview,setPreview]=useState<string | null>(null);
+    const [isCameraReady,setIsCameraReady]=useState<boolean>(false);
+    const [isProcessing,setIsProcessing]=useState<boolean>(false);
 
 useEffect(()=>{
 
@@ -18,6 +21,8 @@ async function startCamera(){
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           await videoRef.current.play();
+          setStatus("Camera ready - point at ID card");
+          setIsCameraReady(true);
       }
 
     } catch(error) {
@@ -29,9 +34,11 @@ async function startCamera(){
     }, []);
 
     const captureAndUpload=async()=>{
-        if (!videoRef.current || !canvasRef.current) {
+        if (!videoRef.current || !canvasRef.current || !isCameraReady || isProcessing) {
             return;
         }
+          setIsProcessing(true);
+          setStatus("Capturing");
             const video=videoRef.current;
             const canvas=canvasRef.current;
             canvas.width=video.videoWidth;
@@ -44,7 +51,11 @@ async function startCamera(){
 
 
       canvas.toBlob(async(blob)=>{
-        if(!blob)return;
+        if(!blob){
+          setIsProcessing(false);
+          setStatus("error-capturing");
+          return;
+        }
         setStatus("uploading");
         try{
           const form = new FormData();
@@ -55,7 +66,7 @@ async function startCamera(){
           if (response.data?.result) {
             const { sharpness, edge_ratio } = response.data.result;
             if (sharpness > 50 && edge_ratio > 0.02) {
-              // good enough, set preview
+
               setPreview(response.data.result.preview);
               setStatus("good capture");
             } else {
@@ -68,47 +79,56 @@ async function startCamera(){
               console.error("Error uploading image:",error);
               setStatus("error-uploading");
             }
+            setIsProcessing(false);
           });
         }
 
         useEffect(() => {
           const interval = setInterval(async () => {
               await captureAndUpload();
-          }, 5000);
+          }, 8000);
           return () => clearInterval(interval);
       }, []);
 
 
-        return (
-          <div>
-        <div style={{ position: "relative", width: "100%" }}>
-          <video ref={videoRef} style={{ width: "100%" }} muted playsInline />
-          <div
-            style={{
-            position: "absolute",
-            top: "30%",
-            left: "10%",
-            width: "80%",
-            height: "40%",
-            border: "2px dashed lime",
-            pointerEvents: "none",
-    }}
-  />
-</div>
-            <canvas ref={canvasRef} style={{display:"none"}}/>
-            <div>
-            <button onClick={captureAndUpload}>Capture Now</button>
-            <span style={{marginLeft:10}}>{status}</span>
-          </div>
-          {preview && (
-            <div style={{marginTop:10}}>
-              <img src={preview} alt="Processed" style={{maxWidth:"100%"}}/>
-            </div>
-          )}
-          </div>
+      return (
+        <div className="camera-container">
 
-        )
-      };
+            <div className="camera-view">
+             <video ref={videoRef} className="camera-video" muted playsInline />
+
+                <div className="camera-overlay">
+                 <div className="id-card-frame">
+                  <div className="corner top-left"></div>
+                  <div className="corner top-right"></div>
+                  <div className="corner bottom-left"></div>
+                  <div className="corner bottom-right"></div>
+                    </div>
+                </div>
+            </div>
+
+            <canvas ref={canvasRef} style={{ display: "none" }} />
+
+            <div className="camera-controls">
+                <button
+                    className="capture-button"
+                    onClick={captureAndUpload}
+                    disabled={!isCameraReady || isProcessing}
+                >
+                    {isProcessing ? "Processing..." : "Capture Now"}
+                </button>
+
+                <span className="status-text">{status}</span>
+            </div>
+
+            {preview && (
+                <div className="preview-container">
+                    <img src={preview} alt="Processed" className="preview-image" />
+                </div>
+            )}
+        </div>
+    );
+};
 
 
 export default Camera;
